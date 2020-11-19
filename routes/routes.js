@@ -129,5 +129,29 @@ module.exports = (postgresClient, DynamoDBClient, S3Client) => {
         }
     });
 
+    router.get('/sync/latest-head', async (req, res) => {
+        const clientId = req.query.client_id;
+        
+        try {
+            const syncHead = await clientSyncController.getLatestSyncDates(clientId);
+
+            res.send({
+                MESSAGE: 'DONE',
+                RESPONSE: 'Client Sync Head Fetched!',
+                CODE: 'CLIENT_SYNC_HEAD_FETCHED_SUCCESSFULLY',
+                CONTENT: syncHead
+            });
+        }
+        catch (err) {
+            console.error(chalk.error(`ERR: ${JSON.stringify(err.message)}`));
+
+            res.status(400).send({
+                ERR: err.message,
+                RESPONSE: 'Client Sync Head Fetch Failed',
+                CODE: 'CLIENT_SYNC_HEAD_FETCHING_FAILED',
+            });
+        }
+    })
+
     return router;
 }

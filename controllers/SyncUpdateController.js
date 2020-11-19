@@ -48,7 +48,7 @@ module.exports = (S3Client) => {
             } catch(err) {
                 return reject(err);
             };   
-        })
+        });
     };
 
     const deleteSyncRecord = async (clientId, timeStamp) => {
@@ -72,6 +72,30 @@ module.exports = (S3Client) => {
             };   
         })
     };
+
+    const getLatestSyncDate = async (clientId) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const clientSyncParam = { 
+                    Bucket: blissClientSyncBucket,
+                    Prefix: `${clientId}/`,
+                };
+        
+                S3Client.listObjects(clientSyncParam, (err, data) => {
+                    if(err) {
+                        return reject(err);
+                    }
+                
+                    const headSyncKey = data.Content[0]['key'];
+
+                    return resolve(headSyncKey);
+                });
+
+            } catch(err) {
+                return reject(err);
+            };   
+        })
+    }
 
     return {
         syncClient,
