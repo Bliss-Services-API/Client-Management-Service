@@ -133,7 +133,7 @@ module.exports = (postgresClient, DynamoDBClient, S3Client) => {
         const clientId = req.query.client_id;
         
         try {
-            const syncHead = await clientSyncController.getLatestSyncDates(clientId);
+            const syncHead = await clientSyncController.getLatestSyncDate(clientId);
 
             res.send({
                 MESSAGE: 'DONE',

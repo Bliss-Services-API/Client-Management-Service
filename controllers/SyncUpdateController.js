@@ -99,6 +99,7 @@ module.exports = (S3Client) => {
 
     return {
         syncClient,
-        deleteSyncRecord
+        deleteSyncRecord,
+        getLatestSyncDate
     };
 }
