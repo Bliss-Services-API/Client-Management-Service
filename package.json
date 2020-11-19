@@ -1,0 +1,33 @@
+{
+  "name": "client-management-service",
+  "version": "1.0.0",
+  "description": "NodeJS Service for Managing Client Profile in the Bliss App",
+  "main": "index.js",
+  "scripts": {
+    "start": "node client.js --env production",
+    "migrate": "sequelize db:migrate --env production",
+    "unmigrate": "sequelize db:migrate:undo:all --env production",
+    "dev-start": "nodemon client.js --env development",
+    "dev-migrate": "sequelize db:migrate --env development",
+    "dev-unmigrate": "sequelize db:migrate:undo:all --env development",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sarthak Joshi",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.794.0",
+    "body-parser": "^1.19.0",
+    "chalk": "^4.1.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.2",
+    "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.3.5",
+    "sequelize-cli": "^6.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
