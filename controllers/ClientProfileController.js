@@ -17,6 +17,7 @@ module.exports = (postgresClient, DynamoDBClient) => {
     const Model = models(postgresClient);
     const clientProfileModel = Model.clientProfileModel;
     const clientCredentialModel = Model.clientCredentialsModel;
+    const clientPaymentHistoryModel = Model.clientPaymentHistoryModel;
 
     const MagicWord = process.env.MAGIC_WORD;
     const clientFCMTokenTable = process.env.CLIENT_FCM_TOKEN_TABLE;
@@ -43,6 +44,14 @@ module.exports = (postgresClient, DynamoDBClient) => {
         const emailSalted = clientEmail + "" + MagicWord;
         const clientId = crypto.createHash('sha256').update(emailSalted).digest('base64');
         return clientId;
+    };
+
+    const deleteProfileData = async (clientId) => {
+        await clientPaymentHistoryModel.delete({ where: { client_id: clientId } });
+        await clientCredentialModel.delete({ where: { client_id: clientId } });
+        await clientProfileModel.delete({ where: { client_id: clientId } });
+
+        return true;
     };
 
     /**
@@ -92,6 +101,46 @@ module.exports = (postgresClient, DynamoDBClient) => {
         })
     };
 
+    const updateClientName = async (clientId, clientName) => {
+        await clientCredentialModel.update({
+            client_name: clientName
+        }, {
+            where: {
+                client_id: clientId
+            }
+        });
+    };
+
+    const updateClientBio = async (clientId, clientBio) => {
+        await clientCredentialModel.update({
+            client_bio: clientBio
+        }, {
+            where: {
+                client_id: clientId
+            }
+        });
+    };
+
+    const updateClientContactNumber = async (clientId, clientContactNumber) => {
+        await clientCredentialModel.update({
+            client_contact_number: clientContactNumber
+        }, {
+            where: {
+                client_id: clientId
+            }
+        });
+    };
+
+    const updateClientCategory = async (clientId, clientCategory) => {
+        await clientCredentialModel.update({
+            client_category: clientCategory
+        }, {
+            where: {
+                client_id: clientId
+            }
+        });
+    };
+
     const uploadClientCredentials = async (clientId, clientEmail, clientName, clientPassword) => {
         const clientCredentialData = {};
 
@@ -102,6 +151,16 @@ module.exports = (postgresClient, DynamoDBClient) => {
 
         await clientCredentialModel.create(clientCredentialData);
         return true;
+    };
+
+    const getClientProfile = async (clientId) => {
+        const profile = await clientProfileModel.findAll({
+            where: {
+                client_id: clientId
+            }
+        });
+
+        return profile[0]['dataValues'];
     }
 
     return {
@@ -109,6 +168,12 @@ module.exports = (postgresClient, DynamoDBClient) => {
         getClientId,
         checkClientProfileExists,
         uploadClientFCMToken,
-        uploadClientCredentials
+        uploadClientCredentials,
+        deleteProfileData,
+        updateClientName,
+        updateClientContactNumber,
+        updateClientBio,
+        updateClientCategory,
+        getClientProfile
     };
 }

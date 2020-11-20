@@ -1,49 +1,26 @@
 'use strict';
 
-module.exports = (S3Client) => {
+module.exports = (postgresClient) => {
 
-    const blissClientSyncBucket = process.env.BLISS_CLIENT_SYNC_BUCKET;
+    const models = require('../models');
 
-    const getSyncData = async (clientId, timeStamp) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const videoParam = { 
-                    Bucket: blissClientSyncBucket,
-                    Prefix: `${clientId}/`,
-                    Key: `${timeStamp}.bliss`,
-                    Expires: 60 * 15
-                };
-        
-                const syncDataSignedUrl = S3Client.getSignedUrl('getObjects', videoParam);
-                return resolve(syncDataSignedUrl);
-            }
-            catch(err) {
-                return reject(err);
-            };
-        })
-    };
+    const Model = models(postgresClient);
+    const clientSyncMessageModel = Model.clientSyncMessageModel;
 
     const syncClient = async (clientId) => {
         return new Promise(async (resolve, reject) => {
-            const syncContent = {};
+            const syncContent = [];
 
             try {
-                const clientSyncParam = { 
-                    Bucket: blissClientSyncBucket,
-                    Prefix: `${clientId}/`,
-                };
-        
-                S3Client.listObjects(clientSyncParam, (err, data) => {
-                    if(err) {
-                        return reject(err);
+                const syncRecords = await clientSyncMessageModel.findAll({
+                    where: {
+                        client_id: clientId
                     }
-                
-                    data.Contents.forEach(async syncData => {
-                        syncContent[`${syncData.key}`] = await getSyncData(clientId, syncData.key);
-                    });
-
-                    return resolve(syncContent);
                 });
+
+                syncRecords.forEach(syncData => syncContent.push(syncData));
+
+                return resolve(syncContent);
 
             } catch(err) {
                 return reject(err);
@@ -51,55 +28,52 @@ module.exports = (S3Client) => {
         });
     };
 
-    const deleteSyncRecord = async (clientId, timeStamp) => {
+    const deleteSyncRecord = async (clientId, responseId = undefined, requestId = undefined, podcastTitle = undefined, podcastEpisodeTitle = undefined) => {
         return new Promise(async (resolve, reject) => {
             try {
-                const clientSyncParam = { 
-                    Bucket: blissClientSyncBucket,
-                    Prefix: `${clientId}/`,
-                    Key: `${timeStamp}.bliss`
+                if(responseId !== undefined) {
+                    await clientSyncMessageModel.destroy({
+                        where: {
+                            client_id: clientId,
+                            bliss_response_id: responseId
+                        }
+                    });
                 };
-        
-                S3Client.deleteObject(clientSyncParam, (err, data) => {
-                    if(err) {
-                        return reject(err);
-                    }
-                    return resolve(true);
-                });
 
+                if(requestId !== undefined) {
+                    await clientSyncMessageModel.destroy({
+                        where: {
+                            client_id: clientId,
+                            bliss_request_id: requestId
+                        }
+                    });
+                };
+
+                if(podcast_title !== undefined && podcast_episode_title !== undefined) {
+                    await clientSyncMessageModel.destroy({
+                        where: {
+                            client_id: clientId,
+                            podcast_title: podcastTitle,
+                            podcast_episode_title: podcastEpisodeTitle
+                        }
+                    });
+                };
+
+                return resolve(true);
             } catch(err) {
                 return reject(err);
             };   
         })
     };
 
-    const getLatestSyncDate = async (clientId) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const clientSyncParam = { 
-                    Bucket: blissClientSyncBucket,
-                    Prefix: `${clientId}/`,
-                };
-        
-                S3Client.listObjects(clientSyncParam, (err, data) => {
-                    if(err) {
-                        return reject(err);
-                    }
-                
-                    const headSyncKey = data.Content[0]['key'];
-
-                    return resolve(headSyncKey);
-                });
-
-            } catch(err) {
-                return reject(err);
-            };   
-        })
-    }
+    const deleteProfileSync = async (clientId) => {
+        await clientSyncMessageModel.destroy({ where: { client_id: clientId }});
+        return true;
+    };
 
     return {
         syncClient,
         deleteSyncRecord,
-        getLatestSyncDate
+        deleteProfileSync
     };
 }

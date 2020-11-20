@@ -105,7 +105,7 @@ module.exports = (S3Client) => {
             return true;
         });
     };
-    
+
     return {
         uploadClientImage, checkClientImageExist, deleteClientImage
     };
